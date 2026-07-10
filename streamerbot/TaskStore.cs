@@ -9,6 +9,7 @@ public class CommunityTask
     public string Text { get; set; }
     public bool Done { get; set; }
     public DateTime Created { get; set; }
+    public DateTime? Completed { get; set; } 
 }
 
 public class TaskDatabase
@@ -35,6 +36,7 @@ public class CPHInline
     private const string ARG_OPERATION = "operation";
     private const string ARG_USER = "user";
     private const string ARG_TEXT = "text";
+    private const string ARG_TASK_ID = "taskId";
 
     // ===== Limits =====
     private const int MAX_TASK_LENGTH = 90;
@@ -108,6 +110,11 @@ public class CPHInline
         CPH.SetGlobalVar(DATABASE_NAME, json, true);
     }
 
+    private void BroadcastOverlay(TaskDatabase db)
+    {
+        // TODO: WebSocket broadcast
+    }
+
     private void AddTask(TaskDatabase db)
     {
         if (!args.ContainsKey(ARG_USER) || !args.ContainsKey(ARG_TEXT))
@@ -146,7 +153,7 @@ public class CPHInline
             {
                 activeUser++;
 
-                if (existingTask.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
+                if (existingTask.Text.Trim().Equals(text, StringComparison.OrdinalIgnoreCase))
                     duplicate = true;
             }
         }
@@ -178,6 +185,7 @@ public class CPHInline
 
         db.Tasks.Add(task);
         SaveDatabase(db);
+        BroadcastOverlay(db);
         CPH.SendMessage("✅ Task #" + task.Id + " added! (" + db.Tasks.Count + "/" + MAX_TOTAL_TASKS + ")");
     }
 
@@ -202,5 +210,35 @@ public class CPHInline
 
         db.Tasks.Remove(oldestCompleted);
         return true;
+    }
+
+    private CommunityTask FindTask(TaskDatabase db, string user, int taskId)
+    {
+        // !done (no ID) -> oldest active task of this user
+        if (taskId <= 0)
+        {
+            CommunityTask oldestTask = null;
+
+            foreach (CommunityTask task in db.Tasks)
+            {
+                if (task.Done)
+                    continue;
+
+                if (!task.User.Equals(user, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (oldestTask == null || task.Created < oldestTask.Created)
+                    oldestTask = task;
+            }
+            return oldestTask;
+        }
+
+        // !done <ID> -> find task by ID
+        foreach (CommunityTask task in db.Tasks)
+        {
+            if (task.Id == taskId)
+                return task;
+        }
+        return null;
     }
 }
