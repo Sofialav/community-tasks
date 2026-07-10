@@ -62,7 +62,18 @@ public class CPHInline
                 break;
 
             case OP_COMPLETE:
-                CPH.SendMessage("CompleteTask not implemented yet.");
+                if (!args.ContainsKey(ARG_USER))
+                {
+                    CPH.SendMessage("TaskStore: Missing user.");
+                    break;
+                }
+
+                int taskId = 0;
+
+                if (args.ContainsKey(ARG_TASK_ID))
+                    int.TryParse(args[ARG_TASK_ID].ToString(), out taskId);
+
+                CompleteTask( db, args[ARG_USER].ToString(), taskId );
                 break;
 
             case OP_REMOVE:
@@ -193,6 +204,37 @@ public class CPHInline
         db.Tasks.Add(task);
         Save(db);
         CPH.SendMessage("✅ Task #" + task.Id + " added! (" + db.Tasks.Count + "/" + MAX_TOTAL_TASKS + ")");
+    }
+
+    private void CompleteTask(TaskDatabase db, string user, int taskId)
+    {
+        user = user.Trim();
+        CommunityTask task = FindTask(db, user, taskId);
+
+        if (task == null)
+        {
+            if (taskId > 0)
+                CPH.SendMessage("❌ Task #" + taskId + " doesn't exist.");
+            else
+                CPH.SendMessage("❌ You don't have any active tasks.");
+            return;
+        }
+
+        if (task.Done)
+        {
+            CPH.SendMessage("❌ Task #" + task.Id + " is already completed.");
+            return;
+        }
+
+        if (!task.User.Equals(user, StringComparison.OrdinalIgnoreCase))
+        {
+            CPH.SendMessage("❌ Task #" + task.Id + " belongs to another user.");
+            return;
+        }
+
+        task.Done = true;
+        Save(db);
+        CPH.SendMessage("✅ Task #" + task.Id + " completed!");
     }
 
     private bool MakeRoomForNewTask(TaskDatabase db)
