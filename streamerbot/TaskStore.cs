@@ -21,11 +21,9 @@ public class TaskDatabase
 public class CPHInline
 {
     // ===== Database =====
-
     private const string DATABASE_NAME = "CommunityTasks";
 
     // ===== Operations =====
-
     private const string OP_TEST = "test";
     private const string OP_ADD = "add";
     private const string OP_COMPLETE = "complete";
@@ -34,21 +32,18 @@ public class CPHInline
     private const string OP_RESET = "reset";
 
     // ===== Arguments =====
-
     private const string ARG_OPERATION = "operation";
     private const string ARG_USER = "user";
     private const string ARG_TEXT = "text";
 
     // ===== Limits =====
-
     private const int MAX_TASK_LENGTH = 90;
-    private const int MAX_USER_TASKS = 3;
-    private const int MAX_ACTIVE_TASKS = 70;
+    private const int MAX_TOTAL_TASKS = 50;
+    private const int MAX_USER_ACTIVE_TASKS = 3;
 
     public bool Execute()
     {
         TaskDatabase db = LoadDatabase();
-
         string operation = OP_TEST;
 
         if (args.ContainsKey(ARG_OPERATION))
@@ -139,35 +134,26 @@ public class CPHInline
             return;
         }
 
-        int activeGlobal = 0;
         int activeUser = 0;
         bool duplicate = false;
 
-        foreach (CommunityTask t in db.Tasks)
+        foreach (CommunityTask task in db.Tasks)
         {
-            if (t.Done)
+            if (task.Done)
                 continue;
 
-            activeGlobal++;
-
-            if (!t.User.Equals(user, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            activeUser++;
-
-            if (t.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
-                duplicate = true;
+            if (task.User.Equals(user, StringComparison.OrdinalIgnoreCase))
+            {
+                activeUser++;
+                
+                if (task.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
+                    duplicate = true;
+            }
         }
 
-        if (activeGlobal >= MAX_ACTIVE_TASKS)
+        if (activeUser >= MAX_USER_ACTIVE_TASKS)
         {
-            CPH.SendMessage("❌ The community task list is full.");
-            return;
-        }
-
-        if (activeUser >= MAX_USER_TASKS)
-        {
-            CPH.SendMessage("❌ You already have " + MAX_USER_TASKS + " active tasks.");
+            CPH.SendMessage("❌ You already have " + MAX_USER_ACTIVE_TASKS + " active tasks.");
             return;
         }
 
@@ -177,6 +163,11 @@ public class CPHInline
             return;
         }
 
+        if (!MakeRoomForNewTask(db))
+        {
+            CPH.SendMessage("❌ The community task list is full. Complete some tasks first!");
+            return;
+        }
         CommunityTask task = new CommunityTask();
 
         task.Id = db.NextId++;
@@ -186,9 +177,30 @@ public class CPHInline
         task.Created = DateTime.UtcNow;
 
         db.Tasks.Add(task);
-
         SaveDatabase(db);
+        CPH.SendMessage("✅ Task #" + task.Id + " added! (" + db.Tasks.Count + "/" + MAX_TOTAL_TASKS + ")");
+    }
 
-        CPH.SendMessage("✅ Task #" + task.Id + " added! (" + (activeGlobal + 1) + "/" + MAX_ACTIVE_TASKS + ")");
+    private bool MakeRoomForNewTask(TaskDatabase db)
+    {
+        if (db.Tasks.Count < MAX_TOTAL_TASKS)
+            return true;
+
+        CommunityTask oldestCompleted = null;
+
+        foreach (CommunityTask task in db.Tasks)
+        {
+            if (!task.Done)
+                continue;
+
+            if (oldestCompleted == null || task.Created < oldestCompleted.Created)
+            { oldestCompleted = task; }
+        }
+
+        if (oldestCompleted == null)
+            return false;
+
+        db.Tasks.Remove(oldestCompleted);
+        return true;
     }
 }
