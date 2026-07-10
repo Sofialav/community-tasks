@@ -18,6 +18,11 @@ public class TaskDatabase
     public List<CommunityTask> Tasks { get; set; } = new List<CommunityTask>();
 }
 
+public class OverlayData
+{
+    public List<CommunityTask> Tasks { get; set; } = new List<CommunityTask>();
+}
+
 public class CPHInline
 {
     // ===== Database =====
@@ -81,7 +86,8 @@ public class CPHInline
                 break;
 
             case OP_GET:
-                CPH.SendMessage("Tasks: " + db.Tasks.Count);
+                //CPH.SendMessage("Tasks: " + db.Tasks.Count);
+                CPH.LogInfo(CreateOverlayJson(db));
                 break;
 
             case OP_RESET:
@@ -139,6 +145,18 @@ public class CPHInline
         BroadcastOverlay(db);
     }
 
+    private string CreateOverlayJson(TaskDatabase db)
+    {
+        OverlayData overlay = new OverlayData();
+
+        overlay.Tasks = db.Tasks;
+
+        return JsonConvert.SerializeObject(
+            overlay,
+            Formatting.None
+        );
+    }
+
     private void AddTask(TaskDatabase db, string user, string text)
     {   
         user = user.Trim();
@@ -171,7 +189,7 @@ public class CPHInline
             {
                 activeUser++;
 
-                if (existingTask.Text.Trim().Equals(text, StringComparison.OrdinalIgnoreCase))
+                if (existingTask.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
                     duplicate = true;
             }
         }

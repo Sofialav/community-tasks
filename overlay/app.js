@@ -1,16 +1,29 @@
+const socket = new WebSocket("ws://127.0.0.1:8080/");
+
+socket.onopen = () => {
+    console.log("Connected to Streamer.bot");
+};
+
+socket.onclose = () => {
+    console.log("Disconnected");
+};
+
+socket.onerror = (err) => {
+    console.error(err);
+};
+
+socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    console.log(message);
+
+};
+
 const overlay = {
     tasks: [],
 
     init() {
         // Fake data for now
-        this.tasks = [
-            {
-                "id":1,
-                "user":"Alice",
-                "text":"Finish thumbnail",
-                "done":false
-            }
-        ];
+        this.tasks = [];
         this.render();
     },
 
