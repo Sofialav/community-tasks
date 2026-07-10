@@ -9,7 +9,6 @@ public class CommunityTask
     public string Text { get; set; }
     public bool Done { get; set; }
     public DateTime Created { get; set; }
-    public DateTime? Completed { get; set; } 
 }
 
 public class TaskDatabase
@@ -47,14 +46,19 @@ public class CPHInline
     {
         TaskDatabase db = LoadDatabase();
         string operation = OP_TEST;
-
-        if (args.ContainsKey(ARG_OPERATION))
-            operation = args[ARG_OPERATION].ToString().ToLower();
+        if (args.TryGetValue(ARG_OPERATION, out object op))
+            operation = op.ToString().ToLower();
 
         switch (operation)
         {
             case OP_ADD:
-                AddTask(db);
+                if (!args.ContainsKey(ARG_USER) || !args.ContainsKey(ARG_TEXT))
+                {
+                    CPH.SendMessage("TaskStore: Missing arguments.");
+                    break;
+                }
+
+                AddTask( db, args[ARG_USER].ToString(), args[ARG_TEXT].ToString() );
                 break;
 
             case OP_COMPLETE:
@@ -94,7 +98,10 @@ public class CPHInline
 
         try
         {
-            return JsonConvert.DeserializeObject<TaskDatabase>(json);
+            TaskDatabase db = JsonConvert.DeserializeObject<TaskDatabase>(json);
+            if (db == null || db.Version != 1)
+                throw new Exception();
+            return db;
         }
         catch
         {
@@ -115,16 +122,16 @@ public class CPHInline
         // TODO: WebSocket broadcast
     }
 
-    private void AddTask(TaskDatabase db)
+    private void Save(TaskDatabase db)
     {
-        if (!args.ContainsKey(ARG_USER) || !args.ContainsKey(ARG_TEXT))
-        {
-            CPH.SendMessage("TaskStore: Missing arguments.");
-            return;
-        }
+        SaveDatabase(db);
+        BroadcastOverlay(db);
+    }
 
-        string user = args[ARG_USER].ToString().Trim();
-        string text = args[ARG_TEXT].ToString().Trim();
+    private void AddTask(TaskDatabase db, string user, string text)
+    {   
+        user = user.Trim();
+        text = text.Trim();
 
         while (text.Contains("  "))
             text = text.Replace("  ", " ");
@@ -184,8 +191,7 @@ public class CPHInline
         task.Created = DateTime.UtcNow;
 
         db.Tasks.Add(task);
-        SaveDatabase(db);
-        BroadcastOverlay(db);
+        Save(db);
         CPH.SendMessage("✅ Task #" + task.Id + " added! (" + db.Tasks.Count + "/" + MAX_TOTAL_TASKS + ")");
     }
 
@@ -201,7 +207,7 @@ public class CPHInline
             if (!task.Done)
                 continue;
 
-            if (oldestCompleted == null || task.Created < oldestCompleted.Created)
+             if (oldestCompleted == null || task.Created < oldestCompleted.Created)
             { oldestCompleted = task; }
         }
 
@@ -212,7 +218,7 @@ public class CPHInline
         return true;
     }
 
-    private CommunityTask FindTask(TaskDatabase db, string user, int taskId)
+    private CommunityTask FindTask(TaskDatabase db, string requestingUser, int taskId)
     {
         // !done (no ID) -> oldest active task of this user
         if (taskId <= 0)
@@ -224,7 +230,7 @@ public class CPHInline
                 if (task.Done)
                     continue;
 
-                if (!task.User.Equals(user, StringComparison.OrdinalIgnoreCase))
+                if (!task.User.Equals(requestingUser, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (oldestTask == null || task.Created < oldestTask.Created)
