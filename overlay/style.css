@@ -1,0 +1,141 @@
+:root{
+    --background:rgba(24,24,34,.88);
+    --border:rgba(255,255,255,.08);
+    --accent:#a67cff;
+    --text:#ffffff;
+    --secondary:#cfcfe0;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:transparent;
+    font-family:'Nunito',sans-serif;
+    padding:20px;
+}
+
+.panel{
+    width:460px;
+    max-height:700px;
+    display:flex;
+    flex-direction:column;
+    background:var(--background);
+    border:1px solid var(--border);
+    border-radius:22px;
+    overflow:hidden;
+    backdrop-filter:blur(18px);
+    box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 22px;
+    border-bottom:2px solid var(--accent);
+}
+
+.title{
+    color:#fff;
+    font-size:20px;
+    font-weight:800;
+}
+
+.counter{
+    color:var(--secondary);
+    font-size:16px;
+    font-weight:700;
+}
+
+.tasks{
+    flex:1;
+    overflow-y:auto;
+    max-height:640px;
+    padding:8px 24px 12px;
+}
+
+.tasks::-webkit-scrollbar{
+    width:6px;
+}
+
+.tasks::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.15);
+    border-radius:10px;
+}
+
+.task{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:38px;
+    padding:6px 0;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    animation:fadeIn .25s ease;
+}
+
+.task:last-child{
+    border-bottom:none;
+}
+
+.indicator{
+    width:12px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-shrink:0;
+}
+
+.dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+}
+
+.status{
+    color:#68d77b;
+    font-size:16px;
+    font-weight:800;
+}
+
+.user{
+    width:115px;
+    flex-shrink:0;
+    color:#fff;
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.content{
+    flex:1;
+    color:var(--secondary);
+    font-size:15px;
+    line-height:1.3;
+    word-break:break-word;
+}
+
+.completed{
+    opacity:.6;
+}
+
+.completed .user,
+.completed .content{
+    text-decoration:line-through;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(6px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
