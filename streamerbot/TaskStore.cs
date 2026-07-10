@@ -137,16 +137,16 @@ public class CPHInline
         int activeUser = 0;
         bool duplicate = false;
 
-        foreach (CommunityTask task in db.Tasks)
+        foreach (CommunityTask existingTask in db.Tasks)
         {
-            if (task.Done)
+            if (existingTask.Done)
                 continue;
 
-            if (task.User.Equals(user, StringComparison.OrdinalIgnoreCase))
+            if (existingTask.User.Equals(user, StringComparison.OrdinalIgnoreCase))
             {
                 activeUser++;
-                
-                if (task.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
+
+                if (existingTask.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
                     duplicate = true;
             }
         }
