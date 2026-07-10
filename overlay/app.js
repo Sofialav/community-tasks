@@ -5,30 +5,17 @@ const overlay = {
         // Fake data for now
         this.tasks = [
             {
-                id: 1,
-                user: "Alice",
-                task: "Finish YouTube thumbnail",
-                done: false
-            },
-            {
-                id: 2,
-                user: "Bob",
-                task: "Study Portuguese",
-                done: false
-            },
-            {
-                id: 3,
-                user: "Charlie",
-                task: "Water the cactus 🌵",
-                done: true
-            },
-            {
-                id: 4,
-                user: "Egor",
-                task: "Finish wall and paint it",
-                done: false
+                "id":1,
+                "user":"Alice",
+                "text":"Finish thumbnail",
+                "done":false
             }
         ];
+        this.render();
+    },
+
+    setTasks(tasks) {
+        this.tasks = tasks;
         this.render();
     },
 
@@ -54,7 +41,7 @@ const overlay = {
                     ${task.user}
                 </div>
                 <div class="content">
-                    ${task.task}
+                    ${task.text}
                 </div>
             `;
 
