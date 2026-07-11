@@ -86,8 +86,7 @@ public class CPHInline
                 break;
 
             case OP_GET:
-                //CPH.SendMessage("Tasks: " + db.Tasks.Count);
-                CPH.LogInfo(CreateOverlayJson(db));
+                BroadcastOverlay(db);
                 break;
 
             case OP_RESET:
@@ -136,7 +135,8 @@ public class CPHInline
 
     private void BroadcastOverlay(TaskDatabase db)
     {
-        // TODO: WebSocket broadcast
+        string json = CreateOverlayJson(db);
+        CPH.WebsocketBroadcastJson(json);
     }
 
     private void Save(TaskDatabase db)
@@ -148,13 +148,16 @@ public class CPHInline
     private string CreateOverlayJson(TaskDatabase db)
     {
         OverlayData overlay = new OverlayData();
-
         overlay.Tasks = db.Tasks;
 
         return JsonConvert.SerializeObject(
             overlay,
-            Formatting.None
-        );
+            Formatting.None,
+            new JsonSerializerSettings
+            {
+                ContractResolver =
+                    new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+            });
     }
 
     private void AddTask(TaskDatabase db, string user, string text)

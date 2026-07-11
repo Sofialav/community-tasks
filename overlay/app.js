@@ -1,7 +1,25 @@
 const socket = new WebSocket("ws://127.0.0.1:8080/");
 
 socket.onopen = () => {
-    console.log("Connected to Streamer.bot");
+    // Subscribe to custom broadcasts
+    socket.send(JSON.stringify({
+        request: "Subscribe",
+        id: "subscribeCustom",
+        events: {
+            General: ["Custom"]
+        }
+    }));
+    // Then request the initial task list
+    socket.send(JSON.stringify({
+        request: "DoAction",
+        id: "communityTasks",
+        action: {
+            name: "TaskStore"
+        },
+        args: {
+            operation: "get"
+        }
+    }));
 };
 
 socket.onclose = () => {
@@ -13,16 +31,23 @@ socket.onerror = (err) => {
 };
 
 socket.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    console.log(message);
-
+    let message;
+    try {
+        message = JSON.parse(event.data);
+    }
+    catch {
+        return;
+    }
+    // Ignore Streamer.bot system messages
+    if (message.data?.tasks) {
+        overlay.setTasks(message.data.tasks);
+    }
 };
 
 const overlay = {
     tasks: [],
 
     init() {
-        // Fake data for now
         this.tasks = [];
         this.render();
     },
