@@ -1,4 +1,4 @@
-const socket = new WebSocket("ws://127.0.0.1:8080/");
+const socket = new WebSocket("ws://127.0.0.1:8080/"); // settings of your streamer.bot websocket
 
 socket.onopen = () => {
     // Subscribe to custom broadcasts
@@ -14,7 +14,7 @@ socket.onopen = () => {
         request: "DoAction",
         id: "communityTasks",
         action: {
-            name: "TaskStore"
+            name: "TaskStore" // name of your action in streamer.bot
         },
         args: {
             operation: "get"
@@ -69,13 +69,13 @@ const overlay = {
         this.tasks.forEach(task => {
             const card = document.createElement("div");
             card.className = task.done ? "task completed" : "task";
-            const indicator = task.done
-            ? `<div class="indicator"><div class="status">✓</div></div>`
-            : `<div class="indicator"><div class="dot" style="background:${colorFromName(task.user)}"></div></div>`;
+            card.dataset.id = task.id;
+            card.dataset.done = task.done;
 
             card.innerHTML = `
-                ${indicator}
-                <div class="user">
+                <div class="task-id">#${task.id}</div>
+                <div class="user"
+                    style="color:${task.done ? "#fff" : colorFromName(task.user)}">
                     ${task.user}
                 </div>
                 <div class="content">
@@ -100,7 +100,6 @@ const userColors = [
     "#A78BFA", // Lavender
     "#F472B6", // Rose
     "#22C55E", // Emerald
-
 ];
 
 function colorFromName(name) {
