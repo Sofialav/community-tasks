@@ -11,6 +11,13 @@ A lightweight real-time community task list powered by Streamer.bot and an OBS b
 - Duplicate task prevention
 - Task ownership protection
 - OBS overlay included
+- Automatic cleanup of old completed tasks when the list is full
+- Complete or clear tasks with chat commands
+
+## Requirements
+
+- Streamer.bot 1.0+
+- OBS Studio
 
 ## Installation
 
@@ -24,6 +31,12 @@ A lightweight real-time community task list powered by Streamer.bot and an OBS b
 
 ## Command Setup
 
+The backend is exposed through a single Action named **TaskStore**. Each chat command simply sets the required arguments before executing that Action.
+ex: "Create community task" action in Streamer.bot:
+
+<img width="654" height="408" alt="image" src="https://github.com/user-attachments/assets/fce1a805-10ae-401b-b587-dcf143cf8c4d" />
+
+
 ### !task
 
 Create a new Action (e.g. **Create Community Task**) with the following sub-actions:
@@ -36,7 +49,7 @@ Create a new Action (e.g. **Create Community Task**) with the following sub-acti
    - `text` = `%rawInput%`
 4. Execute Action → **TaskStore**
 
-Create a Command that triggers this Action.
+Create a Command (`!task`) that triggers this Action.
 
 ---
 
@@ -52,24 +65,35 @@ Create a new Action (e.g. **Complete Community Task**) with the following sub-ac
    - `taskId` = `%rawInput%`
 4. Execute Action → **TaskStore**
 
-Create a Command that triggers this Action.
+Create a Command (`!done`) that triggers this Action.
 
-## Commands
+### !clear
 
-!task [text] 
- -  Creates a new task.
-!done
- - Completes your oldest active task.
-!done [id]
- - Completes one of your tasks by ID.
+Create an Action (for example **Clear Community Tasks**) with these sub-actions:
 
-## Requirements
+1. **Set Argument**
+   - `operation` = `reset`
+2. **Set Argument**
+   - `filter` = `%rawInput%`
+3. **Execute Action**
+   - `TaskStore`
 
-- Streamer.bot 1.0+
-- OBS Studio
+Create a chat command (`!clear`) that triggers this Action.
+
+## Chat Commands
+
+| Command -------------| Description --------------------------------------------------------|
+|----------------------|---------------------------------------------------------------------|
+| `!task <description>`| Create a new task.                                                  |
+| `!done`              | Complete your oldest active task.                                   |
+| `!done <task id>`    | Complete one of your tasks by ID.                                   |
+| `!clear`             | Clear the entire task list (recommended for broadcaster/mods only). |
+| `!clear completed`   | Remove only completed tasks.                                        |
 
 ## Architecture
 
 - `TaskStore` is the central backend Action.
 - Chat commands execute `TaskStore` with different operations (`add`, `complete`, `get`).
-- The overlay connects to the Streamer.bot WebSocket and updates automatically whenever tasks change.
+- Tasks are stored in a Streamer.bot Global Variable.
+- Every change is automatically broadcast through the Streamer.bot WebSocket.
+- The OBS overlay listens for those broadcasts and updates instantly.
