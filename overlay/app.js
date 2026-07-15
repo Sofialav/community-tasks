@@ -75,7 +75,7 @@ const overlay = {
             card.innerHTML = `
                 <div class="task-id">#${task.id}</div>
                 <div class="user"
-                    style="color:${task.done ? "#fff" : colorFromName(task.user)}">
+                    style="color:${task.done ? "#A66A59" : colorFromName(task.user)}">
                     ${task.user}
                 </div>
                 <div class="content">
@@ -88,18 +88,17 @@ const overlay = {
     }
 };
 
-// Nice pastel colors
 const userColors = [
-    "#C084FC", // Purple
-    "#60A5FA", // Blue
-    "#34D399", // Green
-    "#FBBF24", // Yellow
-    "#FB7185", // Pink
-    "#F97316", // Orange
-    "#2DD4BF", // Teal
-    "#A78BFA", // Lavender
-    "#F472B6", // Rose
-    "#22C55E", // Emerald
+    "#7A6654", // Warm brown
+    "#6E7356", // Olive green
+    "#7D5D4A", // Terracotta
+    "#7B6F5A", // Khaki
+    "#6A5C50", // Taupe
+    "#5F6B63", // Sage
+    "#8A6B5C", // Clay
+    "#6C646F", // Dusty lavender
+    "#80715D", // Sandstone
+    "#5E6954"  // Moss
 ];
 
 function colorFromName(name) {

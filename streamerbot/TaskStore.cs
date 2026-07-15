@@ -27,7 +27,6 @@ public class CPHInline
 {
     // ===== Database =====
     private const string DATABASE_NAME = "CommunityTasks";
-
     // ===== Operations =====
     private const string OP_TEST = "test";
     private const string OP_ADD = "add";
@@ -35,13 +34,12 @@ public class CPHInline
     private const string OP_REMOVE = "remove";
     private const string OP_GET = "get";
     private const string OP_RESET = "reset";
-
     // ===== Arguments =====
     private const string ARG_OPERATION = "operation";
     private const string ARG_USER = "user";
     private const string ARG_TEXT = "text";
     private const string ARG_TASK_ID = "taskId";
-
+    private const string ARG_FILTER = "filter";
     // ===== Limits =====
     private const int MAX_TASK_LENGTH = 90;
     private const int MAX_TOTAL_TASKS = 50;
@@ -90,8 +88,31 @@ public class CPHInline
                 break;
 
             case OP_RESET:
-                CPH.SendMessage("Reset not implemented yet.");
+            {
+                string filter = "";
+
+                if (args.TryGetValue(ARG_FILTER, out object value))
+                {
+                    filter = value.ToString().Trim().Split(' ')[0].ToLowerInvariant();
+                }
+                //clear only completed task if argument "completed" passed
+                if (filter == "completed")
+                {
+                    int removed = db.Tasks.RemoveAll(t => t.Done);
+                    Save(db);
+                    CPH.SendMessage("🧹 Removed " + removed + " completed task(s).");
+                }
+                //or clear all
+                else
+                {
+                    db.Tasks.Clear();
+                    db.NextId = 1;
+                    Save(db);
+                    CPH.SendMessage("🗑️ Community task list cleared.");
+                }
+
                 break;
+            }
 
             default:
                 CPH.SendMessage("TaskStore OK (" + db.Tasks.Count + " tasks)");

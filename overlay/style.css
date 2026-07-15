@@ -1,10 +1,12 @@
 :root{
-    --background:rgba(24,24,34,.88);
+    --background:rgba(197, 172, 150,.88);
+    --panel-background:rgba(87, 64, 46, .88);
     --border:rgba(255,255,255,.08);
     --border-strong: var(--accent);
-    --accent:#a67cff;
-    --text:#ffffff;
-    --secondary:#cfcfe0;
+    --accent:#5A6147;
+    --text:#8A4F40;
+    --secondary:#E9DCC5;
+    --inactive: #A66A59;
     --shadow: rgba(0,0,0,.35);
     --scrollbar: rgba(255,255,255,.15);
     --completed-opacity: .6;
@@ -24,7 +26,7 @@ body{
 }
 
 .panel{
-    width:460px;
+    width:520px;
     max-height:700px;
     display:flex;
     flex-direction:column;
@@ -40,13 +42,14 @@ body{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:14px 22px;
-    border-bottom:2px solid var(--border-strong);
+    padding:10px 20px;
+    border-bottom:3px solid var(--border-strong);
+    background:var(--panel-background);
 }
 
 .title{
-    color:var(--text);
-    font-size:20px;
+    color:var(--secondary);
+    font-size:18px;
     font-weight:800;
 }
 
@@ -60,7 +63,7 @@ body{
     flex:1;
     overflow-y:auto;
     max-height:400px;
-    padding:8px 24px 12px;
+    padding:8px 20px 12px;
 }
 
 .tasks::-webkit-scrollbar{
@@ -80,6 +83,7 @@ body{
     padding:6px 0;
     animation:fadeIn .25s ease;
     transition:opacity .2s ease;
+    font-weight: 500;
 }
 
 .task:last-child{
@@ -91,7 +95,7 @@ body{
     flex-shrink:0;
     font-size:12px;
     font-weight:700;
-    color: var(--secondary)
+    color: var(--text)
 }
 
 .user{
@@ -123,7 +127,7 @@ body{
     right:0;
     top:50%;
     height:1px;
-    background:var(--secondary);
+    background:var(--inactive);
     transform:translateY(-50%);
     opacity:.8;
     pointer-events:none;
@@ -133,17 +137,20 @@ body{
     display:flex;
     flex-direction:column;
     gap:8px;
-    padding:14px 22px;
-    border-top:1px solid var(--border-strong);
+    padding:0px;
     background:rgba(255,255,255,.03);
+    padding-bottom: 14px;
 }
 
 .footer-title{
-    color:var(--text);
+    color:var(--secondary);
     font-size:16px;
     font-weight:800;
     text-align:start;
     margin-bottom:4px;
+    padding: 10px 20px;
+    background:var(--panel-background);
+    border-bottom:3px solid var(--border-strong);
 }
 
 .command{
@@ -152,6 +159,8 @@ body{
     gap:8px;
     font-size:13px;
     line-height:1.35;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 .command-name{
@@ -162,7 +171,7 @@ body{
 }
 
 .command-description{
-    color:var(--secondary);
+    color:var(--text);
 }
 
 @keyframes fadeIn{
