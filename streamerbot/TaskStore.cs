@@ -28,10 +28,8 @@ public class CPHInline
     // ===== Database =====
     private const string DATABASE_NAME = "CommunityTasks";
     // ===== Operations =====
-    private const string OP_TEST = "test";
     private const string OP_ADD = "add";
     private const string OP_COMPLETE = "complete";
-    private const string OP_REMOVE = "remove";
     private const string OP_GET = "get";
     private const string OP_RESET = "reset";
     // ===== Arguments =====
@@ -48,9 +46,9 @@ public class CPHInline
     public bool Execute()
     {
         TaskDatabase db = LoadDatabase();
-        string operation = OP_TEST;
+        string operation = "";
         if (args.TryGetValue(ARG_OPERATION, out object op))
-            operation = op.ToString().ToLower();
+            operation = op.ToString().Trim().ToLowerInvariant();
 
         switch (operation)
         {
@@ -79,10 +77,6 @@ public class CPHInline
                 CompleteTask( db, args[ARG_USER].ToString(), taskId );
                 break;
 
-            case OP_REMOVE:
-                CPH.SendMessage("RemoveTask not implemented yet.");
-                break;
-
             case OP_GET:
                 BroadcastOverlay(db);
                 break;
@@ -93,7 +87,9 @@ public class CPHInline
 
                 if (args.TryGetValue(ARG_FILTER, out object value))
                 {
-                    filter = value.ToString().Trim().Split(' ')[0].ToLowerInvariant();
+                    filter = value.ToString().Trim().ToLowerInvariant();
+                    if (filter.Contains(" "))
+                        filter = filter.Substring(0, filter.IndexOf(' '));
                 }
                 //clear only completed task if argument "completed" passed
                 if (filter == "completed")
@@ -115,7 +111,7 @@ public class CPHInline
             }
 
             default:
-                CPH.SendMessage("TaskStore OK (" + db.Tasks.Count + " tasks)");
+                CPH.LogWarn("TaskStore: Unknown operation '" + operation + "'");
                 break;
         }
 
