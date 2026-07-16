@@ -90,6 +90,11 @@ Create a chat command (`!clear`) that triggers this Action.
 | `!clear`             | Clear the entire task list (recommended for broadcaster/mods only). |
 | `!clear completed`   | Remove only completed tasks.                                        |
 
+## Customization
+
+- You can change panel color scheme by modifying color variables in the `:root` in `style.css` 
+- You can change username colors by modifying `userColors` array in `app.js`
+
 ## Architecture
 
 - `TaskStore` is the central backend Action.
