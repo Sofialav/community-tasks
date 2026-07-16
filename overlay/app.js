@@ -85,6 +85,13 @@ const overlay = {
 
             container.appendChild(card);
         });
+
+        if (container.scrollHeight > container.clientHeight) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: "smooth"
+            });
+        }
     }
 };
 
