@@ -1,15 +1,15 @@
 :root{
-    --background:rgba(197, 172, 150,.88);
-    --panel-background:rgba(87, 64, 46, .88);
-    --border:rgba(255,255,255,.08);
+    --background: rgba(82, 63, 82, .92);
+    --panel-background: rgba(55, 42, 56, .96);
+    --border: rgba(255,255,255,.14);
     --border-strong: var(--accent);
-    --accent:#5A6147;
-    --text:#8A4F40;
-    --secondary:#E9DCC5;
-    --inactive: #A66A59;
-    --shadow: rgba(0,0,0,.35);
-    --scrollbar: rgba(255,255,255,.15);
-    --completed-opacity: .6;
+    --accent: #7F9470;
+    --text: #F0E5F1;
+    --secondary: #F5EAF6;
+    --inactive: #B49BB5;
+    --shadow: rgba(35, 24, 38, .45);
+    --scrollbar: rgba(255,255,255,.20);
+    --completed-opacity: .55;
 }
 
 *{

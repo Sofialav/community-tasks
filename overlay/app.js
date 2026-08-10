@@ -96,16 +96,16 @@ const overlay = {
 };
 
 const userColors = [
-    "#7A6654", // Warm brown
-    "#6E7356", // Olive green
-    "#7D5D4A", // Terracotta
-    "#7B6F5A", // Khaki
-    "#6A5C50", // Taupe
-    "#5F6B63", // Sage
-    "#8A6B5C", // Clay
-    "#6C646F", // Dusty lavender
-    "#80715D", // Sandstone
-    "#5E6954"  // Moss
+    "#C19BD6", // Lavender
+    "#8FAFC0", // Dusty blue
+    "#9DB99A", // Sage
+    "#C7A878", // Muted gold
+    "#C18D98", // Dusty rose
+    "#B39478", // Warm brown
+    "#82AAA2", // Teal
+    "#A99BC8", // Soft violet
+    "#BE96AD", // Mauve
+    "#9BA989"  // Olive
 ];
 
 function colorFromName(name) {
