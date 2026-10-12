@@ -19,7 +19,7 @@ Works with **Streamer.bot** + **OBS Studio**. No server, no accounts, no coding.
 
 ## Requirements
 
-- [Streamer.bot](https://streamer.bot) 0.2.x or 1.0+
+- [Streamer.bot](https://streamer.bot) 1.0+
 - [OBS Studio](https://obsproject.com) 28+
 
 ---
@@ -48,11 +48,11 @@ In Streamer.bot: **Servers/Clients → WebSocket Server**
 
 1. Go to **Commands**, right-click → **Add**, and create these three (leave **Location** on *Start*):
 
-   | Command  | Suggested permissions |
-   |----------|-----------------------|
-   | `!task`  | Everyone              |
-   | `!done`  | Everyone              |
-   | `!clear` | Everyone (the code itself only lets the broadcaster through) |
+   | Command  | Suggested permissions                                                    |
+   |----------|--------------------------------------------------------------------------|
+   | `!task`  | Everyone                                                                 |
+   | `!done`  | Everyone                                                                 |
+   | `!clear` | Bodcaster/Moderators (the code itself only lets the broadcaster through) |
 
 2. Back in **Actions → TaskStore**, right-click **Triggers → Core → Commands → Command Triggered**, and pick `!task`. Repeat for `!done` and `!clear`.
 
@@ -72,11 +72,11 @@ Done. Type `!task Test the overlay` in your chat. 🎉
 
 ## Chat commands
 
-| Command               | What it does                                     | Who      |
-|-----------------------|--------------------------------------------------|----------|
-| `!task <description>` | Add a task                                       | Everyone |
-| `!done`               | Finish your oldest unfinished task               | Everyone |
-| `!done <id>`          | Finish one of your tasks by number (`!done 3`)   | Everyone |
+| Command               | What it does                                     | Who          |
+|-----------------------|--------------------------------------------------|--------------|
+| `!task <description>` | Add a task                                       | Everyone     |
+| `!done`               | Finish your oldest unfinished task               | Everyone     |
+| `!done <id>`          | Finish one of your tasks by number (`!done 3`)   | Everyone     |
 | `!clear`              | Wipe the whole list and restart numbering at #1  | Broadcaster* |
 | `!clear completed`    | Remove only finished tasks                       | Broadcaster* |
 | `!clear <id>`         | Remove a single task (`!clear 7`), e.g. spam     | Broadcaster* |
