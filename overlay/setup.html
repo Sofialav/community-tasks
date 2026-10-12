@@ -44,7 +44,7 @@
         .preview{ position:sticky; top:20px; }
         .preview-frame{ border-radius:16px; overflow:hidden; border:1px solid var(--line);
             background:repeating-conic-gradient(#3a3040 0 25%, #332a39 0 50%) 0 0/24px 24px; }
-        iframe{ display:block; width:560px; height:740px; border:0; max-width:100%; }
+        iframe{ display:block; width:560px; height:650px; border:0; max-width:100%; }
         .preview p{ color:var(--muted); font-size:12px; margin-top:8px; }
     </style>
 </head>
@@ -52,7 +52,7 @@
     <main>
     <div>
         <h1>🌸 Community Tasks setup</h1>
-        <p class="lead">Fill this in, copy the link into an OBS Browser Source, done. Nothing here is saved or sent anywhere.</p>
+        <p class="lead">Fill this in, copy the link into an OBS Browser Source, done. Your settings aren't saved anywhere. The connection test only contacts your Streamer.bot, and the copied link contains your WebSocket password if you entered one.</p>
 
         <section>
             <h2><span class="n">1</span> Streamer.bot connection</h2>
@@ -71,12 +71,14 @@
             <div class="grid">
                 <label class="wide">Title <input type="text" id="title" value="🌸 Community Tasks 🌸"></label>
                 <label class="wide">Extra command line <input type="text" id="extra" placeholder="e.g. !lurk !hydrate !help"><span class="hint">Shown under the built-in commands. Leave empty to hide.</span></label>
+                <label>Visible tasks <input type="number" id="rows" value="9" min="1" max="30"><span class="hint">Longer lists scroll</span></label>
             </div>
             <div class="checks" style="margin-top:14px">
                 <label><input type="checkbox" id="anim" checked> Animations</label>
                 <label><input type="checkbox" id="footer" checked> Show commands footer</label>
                 <label><input type="checkbox" id="hidedone"> Hide completed tasks</label>
                 <label><input type="checkbox" id="status" checked> Show connection warnings</label>
+                <label><input type="checkbox" id="autoscroll" checked> Auto-scroll long lists</label>
             </div>
         </section>
 
@@ -89,7 +91,7 @@
             <ol style="margin-top:14px">
                 <li>In OBS: <b>Sources → + → Browser</b>.</li>
                 <li>Untick <b>Local file</b> and paste the link above into <b>URL</b>.</li>
-                <li>Set <b>Width</b> <code>560</code> and <b>Height</b> <code>760</code>.</li>
+                <li>Set <b>Width</b> <code>560</code> and <b>Height</b> <code>650</code> (add 38 for each visible task above 9).</li>
                 <li>Changed something in Streamer.bot later? Right-click the source → <b>Refresh</b>.</li>
             </ol>
         </section>
@@ -103,10 +105,10 @@
 
     <script>
     const $ = id => document.getElementById(id);
-    const fields = ["host","port","password","action","title","extra"];
-    const checks = ["anim","footer","hidedone","status"];
+    const fields = ["host","port","password","action","title","extra","rows"];
+    const checks = ["anim","footer","hidedone","status","autoscroll"];
     const defaults = { host:"127.0.0.1", port:"8080", action:"TaskStore", title:"🌸 Community Tasks 🌸",
-                    anim:true, footer:true, hidedone:false, status:true };
+                    rows:"9", anim:true, footer:true, hidedone:false, status:true, autoscroll:true };
     const overlayUrl = new URL("index.html", location.href);
 
     function buildParams(forPreview) {
@@ -114,6 +116,15 @@
         fields.forEach(f => {
             const v = $(f).value.trim();
             if (forPreview && ["host","port","password","action"].includes(f)) return;
+
+            if (f === "rows") {
+                const n = Number.parseInt(v, 10);
+                if (!Number.isFinite(n)) return;
+                const rows = Math.max(1, Math.min(30, n));   // same limit as app.js
+                if (String(rows) !== defaults.rows) p.set(f, String(rows));
+                return;
+            }
+
             if (v && v !== defaults[f]) p.set(f, v);
         });
         checks.forEach(c => { if ($(c).checked !== defaults[c]) p.set(c, $(c).checked ? "1" : "0"); });
@@ -154,53 +165,76 @@
         r.className = "result " + (ok === true ? "ok" : ok === false ? "bad" : "");
     }
 
+    let currentTest = 0;          // only the latest test may update the result
+    let cancelPrevious = null;    // stops a still-running older test completely
+
     $("testBtn").onclick = () => {
+        const testId = ++currentTest;
+        if (cancelPrevious) cancelPrevious();   // closes its socket and clears its timers
         const host = $("host").value.trim() || "127.0.0.1";
         const port = $("port").value.trim() || "8080";
         const pw = $("password").value;
         const action = $("action").value.trim() || "TaskStore";
         result("Connecting…");
 
-        let ws, done = false, gotHello = false;
-        const finish = (text, ok) => { if (done) return; done = true; result(text, ok); try { ws.close(); } catch {} };
-        const timeout = setTimeout(() => finish(`No answer from ${host}:${port}. Is Streamer.bot open and the WebSocket Server started?`, false), 5000);
+        let ws, done = false;
+        let answerTimer;
+
+        // Every exit goes through here, so both timers are always cleared.
+        const finish = (text, ok) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timeout);
+            clearTimeout(answerTimer);
+            if (testId === currentTest) result(text, ok);
+            if (cancelPrevious === cancelThisTest) cancelPrevious = null;   // only clear our own
+            try { ws?.close(); } catch {}
+        };
+
+        const cancelThisTest = () => finish("", false);   // silent: testId is no longer current
+        cancelPrevious = cancelThisTest;
+
+        const timeout = setTimeout(() => {
+            finish(`No answer from ${host}:${port}. Is Streamer.bot open and the WebSocket Server started?`, false);
+        }, 5000);
 
         // Subscribe like the overlay does, then ask TaskStore for the list. Success
-        // means the task-list broadcast actually arrived
-        let answerTimer;
+        // means the task-list broadcast actually arrived, not just that the request
+        // was accepted (a C# compile error would still be "accepted").
         const askAction = () => {
+            if (done || ws.readyState !== WebSocket.OPEN) return;
             ws.send(JSON.stringify({ request: "Subscribe", id: "t-sub", events: { General: ["Custom"] } }));
             ws.send(JSON.stringify({ request: "DoAction", id: "t-get", action: { name: action }, args: { operation: "get" } }));
         };
 
         try { ws = new WebSocket(`ws://${host}:${port}/`); }
-        catch { clearTimeout(timeout); return finish("That host/port doesn't look right.", false); }
+        catch { return finish("That host/port doesn't look right.", false); }
 
         ws.onopen = () => {};   // wait for Streamer.bot's "Hello"
         ws.onerror = () => {};
-        ws.onclose = () => { clearTimeout(timeout); clearTimeout(answerTimer); finish(`Couldn't connect to ${host}:${port}. Start the WebSocket Server in Streamer.bot (Servers/Clients → WebSocket Server) and check the port.`, false); };
+        ws.onclose = () => { finish(`Couldn't connect to ${host}:${port}. Start the WebSocket Server in Streamer.bot (Servers/Clients → WebSocket Server) and check the port.`, false); };
         ws.onmessage = async e => {
+            if (done) return;   // a cancelled or finished test never sends anything else
             let m; try { m = JSON.parse(e.data); } catch { return; }
             if (m.request === "Hello") {
-                gotHello = true;
                 if (m.authentication) {
-                    if (!pw) { clearTimeout(timeout); return finish("Connected, but Streamer.bot asks for a password. Enter it above.", false); }
+                    if (!pw) { return finish("Connected, but Streamer.bot asks for a password. Enter it above.", false); }
                     const secret = await sha256Base64(pw + m.authentication.salt);
                     const auth = await sha256Base64(secret + m.authentication.challenge);
+                    if (done) return;
                     ws.send(JSON.stringify({ request: "Authenticate", id: "t-auth", authentication: auth }));
                 } else askAction();
             } else if (m.id === "t-auth") {
                 if (m.status === "ok") askAction();
-                else { clearTimeout(timeout); finish("Wrong WebSocket password.", false); }
+                else finish("Wrong WebSocket password.", false);
             } else if (m.id === "t-get") {
-                clearTimeout(timeout);
                 if (m.status !== "ok") return finish(`Connected, but Streamer.bot couldn't run an action called "${action}". Check the action name.`, false);
-                result(`Connected. Waiting for "${action}" to send the task list…`);
+                clearTimeout(timeout);   // the server answered; now give TaskStore its own 4 s
+                if (testId === currentTest) result(`Connected. Waiting for "${action}" to send the task list…`);
                 answerTimer = setTimeout(() => finish(
                     `Connected, and Streamer.bot accepted the request, but "${action}" never sent the task list back. ` +
                     `Open its C# sub-action, click Compile, and check the Streamer.bot log.`, false), 4000);
             } else if (m.data && m.data.source === "CommunityTasks" && Array.isArray(m.data.tasks)) {
-                clearTimeout(answerTimer);
                 const n = m.data.tasks.length;
                 finish(`✔ Connected, and "${action}" sent the task list (${n} task${n === 1 ? "" : "s"}). You're good to go!`, true);
             }

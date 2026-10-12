@@ -12,6 +12,12 @@ const flag = (key, def) => {
     return !(v === "0" || v === "false" || v === "off" || v === "no");
 };
 
+// Same rule as setup.html: a number is clamped to 1–30; missing or not a number means 9.
+function clampRows(raw) {
+    const n = Number.parseInt(raw, 10);
+    return Number.isFinite(n) ? Math.max(1, Math.min(30, n)) : 9;
+}
+
 const CONFIG = {
     host:      params.get("host")     || "127.0.0.1",
     port:      params.get("port")     || "8080",
@@ -24,6 +30,9 @@ const CONFIG = {
     hideDone:  flag("hidedone", false),
     animate:   flag("anim", true),
     status:    flag("status", true),
+    rows:      clampRows(params.get("rows")),          // visible tasks, 1–30 (default 9)
+    autoscroll: flag("autoscroll", true),               // slowly scroll long lists up and down
+    scrollSpeed: Math.max(5, parseInt(params.get("speed"), 10) || 25), // pixels per second
     demo:      flag("demo", false),
     debug:     flag("debug", false)                    // ?debug=1 logs every WebSocket message
 };
@@ -70,6 +79,7 @@ const overlay = {
 
     init() {
         if (!CONFIG.animate) document.body.classList.add("no-anim");
+        document.documentElement.style.setProperty("--visible-tasks", CONFIG.rows);
         if (CONFIG.title !== null) document.getElementById("title").textContent = CONFIG.title;
         if (!CONFIG.footer) document.getElementById("footer").hidden = true;
         if (CONFIG.extra) {
@@ -136,9 +146,12 @@ const overlay = {
         this.els.empty.hidden = visible.length > 0;
 
         if (added.length && !this.firstRender) {
+            // show the new task, then let it sit there for a while
+            scroller.hold(NEW_TASK_HOLD);
             this.scrollToRow(added[added.length - 1].el, animate);
         } else if (this.firstRender) {
             list.scrollTop = list.scrollHeight;
+            scroller.hold(END_PAUSE);
         }
 
         this.firstRender = false;
@@ -339,6 +352,66 @@ const overlay = {
 };
 
 /* ---------------------------------------------------------------------
+   Auto-scroll: when the list is longer than the visible rows, glide slowly
+   to the bottom, pause, glide back to the top, pause, and repeat.
+   A new task interrupts it: the list jumps to the task and waits there.
+   --------------------------------------------------------------------- */
+
+const END_PAUSE = 3000;       // ms to wait at the top and bottom
+const NEW_TASK_HOLD = 6000;   // ms to keep a newly added task in view
+
+const scroller = {
+    pos: 0,
+    dir: 1,
+    holdUntil: 0,
+    last: 0,
+
+    start() {
+        if (!CONFIG.autoscroll) return;
+        requestAnimationFrame(t => this.tick(t));
+    },
+
+    hold(ms) {
+        this.holdUntil = Math.max(this.holdUntil, performance.now() + ms);
+    },
+
+    tick(now) {
+        const list = overlay.els.list;
+        const max = list.scrollHeight - list.clientHeight;
+        const dt = this.last ? Math.min((now - this.last) / 1000, 0.1) : 0;
+        this.last = now;
+
+        if (max <= 1) {
+            // everything fits: nothing to scroll
+            this.pos = 0;
+            this.dir = 1;
+        } else if (now < this.holdUntil) {
+            // paused (or another scroll is running): follow wherever the list is
+            this.pos = list.scrollTop;
+        } else {
+            // something else moved the list (new task): continue from there
+            if (Math.abs(list.scrollTop - this.pos) > 2) this.pos = list.scrollTop;
+            // parked at an end pointing into it (e.g. after jumping to a new
+            // task at the bottom): turn around, the hold already was the pause
+            if (this.dir > 0 && this.pos >= max - 0.5) this.dir = -1;
+            else if (this.dir < 0 && this.pos <= 0.5) this.dir = 1;
+
+            this.pos += this.dir * CONFIG.scrollSpeed * dt;
+
+            // reached an end while gliding: stop exactly there, pause, turn around
+            if (this.dir > 0 && this.pos >= max - 0.5) {
+                this.pos = max; this.dir = -1; this.hold(END_PAUSE);
+            } else if (this.dir < 0 && this.pos <= 0.5) {
+                this.pos = 0; this.dir = 1; this.hold(END_PAUSE);
+            }
+            list.scrollTop = this.pos;
+        }
+
+        requestAnimationFrame(t => this.tick(t));
+    }
+};
+
+/* ---------------------------------------------------------------------
    Streamer.bot WebSocket connection (auto-reconnect + optional password)
    --------------------------------------------------------------------- */
 
@@ -524,7 +597,7 @@ const demo = {
         const open = this.tasks.filter(t => !t.done);
         const r = Math.random();
         const doneIdx = this.tasks.findIndex(t => t.done);
-        if (this.tasks.length > 9 && doneIdx >= 0) this.tasks.splice(doneIdx, 1);
+        if (this.tasks.length > 14 && doneIdx >= 0) this.tasks.splice(doneIdx, 1);
         else if (r < 0.55 || open.length === 0) this.add();
         else open[Math.floor(Math.random() * open.length)].done = true;
         overlay.setTasks(this.copy());
@@ -536,5 +609,6 @@ const demo = {
 /* --------------------------------------------------------------------- */
 
 overlay.init();
+scroller.start();
 if (CONFIG.demo) demo.start();
 else connection.connect();

@@ -17,7 +17,8 @@
     --completed-opacity: .55;
 
     --panel-width: 520px;
-    --list-height: 400px;          /* visible task area before scrolling */
+    --visible-tasks: 9;            /* rows shown before the list scrolls */
+    --row-height: 38px;
     --font: 'Nunito', sans-serif;
 }
 
@@ -98,7 +99,8 @@ body{
 .tasks{
     flex:1;
     overflow-y:auto;
-    max-height:var(--list-height);
+    /* 9 rows + the list's top/bottom padding (8px + 12px) */
+    max-height:calc(var(--visible-tasks) * var(--row-height) + 20px);
     padding:8px 20px 12px;
     scrollbar-width:thin;
     scrollbar-color:var(--scrollbar) transparent;
@@ -124,7 +126,7 @@ body{
     display:flex;
     align-items:center;
     gap:4px;
-    min-height:38px;
+    min-height:var(--row-height);
     padding:6px 0;
     font-weight:500;
     transition:opacity .4s ease;

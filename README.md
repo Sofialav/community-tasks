@@ -13,6 +13,7 @@ Works with **Streamer.bot** + **OBS Studio**. No server, no accounts, no coding.
 - Up to 50 tasks, max 3 unfinished per viewer, duplicates blocked
 - Only the owner can finish a task; only the broadcaster can clear (optionally moderators too)
 - Full list? The oldest finished task makes room automatically
+- Shows 9 tasks at a time; longer lists slowly scroll up and down on their own, pausing at each end and on new tasks
 - Auto-reconnects if Streamer.bot starts after OBS (or restarts mid-stream)
 - Supports WebSocket password authentication
 - Setup page with a connection tester and live preview
@@ -52,7 +53,7 @@ In Streamer.bot: **Servers/Clients → WebSocket Server**
    |----------|--------------------------------------------------------------------------|
    | `!task`  | Everyone                                                                 |
    | `!done`  | Everyone                                                                 |
-   | `!clear` | Bodcaster/Moderators (the code itself only lets the broadcaster through) |
+   | `!clear` | Broadcaster only; moderators are optional if enabled in the code         |
 
 2. Back in **Actions → TaskStore**, right-click **Triggers → Core → Commands → Command Triggered**, and pick `!task`. Repeat for `!done` and `!clear`.
 
@@ -64,7 +65,7 @@ All three commands go to the same action. The code works out what to do from the
 2. Check the port, enter your password if you have one, and click **Test connection**. You want the green "You're good to go!": it means `TaskStore` really ran and sent back the task list.
 3. Optionally change the title or add a line with your own commands. The preview updates as you type.
 4. Click **Copy**.
-5. In OBS: **Sources → + → Browser**. Untick **Local file**, paste the link into **URL**, set **Width 560**, **Height 760**.
+5. In OBS: **Sources → + → Browser**. Untick **Local file**, paste the link into **URL**, set **Width 560**, **Height 650**. (That fits 9 tasks, the commands footer, an extra command line and a connection warning. Each extra visible row adds 38px; with the footer hidden, 480 is enough.)
 
 Done. Type `!task Test the overlay` in your chat. 🎉
 
@@ -99,6 +100,9 @@ Invalid input never changes anything: `!clear typo` or `!clear 0` and `!done abc
 | `action`   | `TaskStore`   | Name of the Streamer.bot action                         |
 | `title`    | 🌸 Community Tasks 🌸 | Panel title                                     |
 | `extra`    | *(none)*      | Extra line under Commands, e.g. `!lurk !help`           |
+| `rows`     | `9`           | How many tasks are visible before the list scrolls      |
+| `autoscroll` | `1`         | `0` stops the slow up-and-down scrolling of long lists  |
+| `speed`    | `25`          | Auto-scroll speed in pixels per second                  |
 | `footer`   | `1`           | `0` hides the commands footer                           |
 | `hidedone` | `0`           | `1` hides finished tasks                                |
 | `anim`     | `1`           | `0` turns all animations off                            |
@@ -124,7 +128,7 @@ After editing, click **Save and Compile**.
 
 ### Colours and layout
 
-- Colours, panel width and list height are CSS variables at the top of `overlay/style.css`.
+- Colours, panel width and row height are CSS variables at the top of `overlay/style.css`. The number of visible tasks is the `rows` option above.
 - Username colours are the `userColors` list near the top of `overlay/app.js`.
 - The command list in the footer is plain HTML in `overlay/index.html`.
 
