@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Tasks Setup</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap">
+    <style>
+        :root{
+            --bg:#2B2130; --card:#372A38; --line:rgba(255,255,255,.12);
+            --text:#F0E5F1; --muted:#B49BB5; --accent:#7F9470; --accent-2:#9DB99A;
+            --ok:#9DB99A; --bad:#D08770;
+        }
+        *{ box-sizing:border-box; margin:0; padding:0; }
+        body{ background:var(--bg); color:var(--text); font-family:'Nunito',system-ui,sans-serif; line-height:1.45; padding:32px 16px; }
+        main{ max-width:1120px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 560px; gap:28px; align-items:start; }
+        @media (max-width:1000px){ main{ grid-template-columns:1fr; } }
+        h1{ font-size:26px; font-weight:800; margin-bottom:4px; }
+        .lead{ color:var(--muted); margin-bottom:22px; }
+        section{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; margin-bottom:18px; }
+        h2{ font-size:15px; font-weight:800; margin-bottom:14px; display:flex; gap:10px; align-items:center; }
+        h2 .n{ width:24px; height:24px; border-radius:50%; background:var(--accent); color:#1d1720; display:grid; place-items:center; font-size:13px; }
+        .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; }
+        .grid .wide{ grid-column:1 / -1; }
+        label{ display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:700; color:var(--muted); }
+        input[type=text], input[type=password], input[type=number]{
+            background:#251C27; border:1px solid var(--line); border-radius:9px; color:var(--text);
+            font:inherit; font-weight:600; padding:9px 11px; outline:none;
+        }
+        input:focus{ border-color:var(--accent); }
+        .hint{ font-weight:500; font-size:12px; color:var(--muted); opacity:.85; }
+        .checks{ display:flex; flex-wrap:wrap; gap:10px 20px; }
+        .checks label{ flex-direction:row; align-items:center; gap:8px; color:var(--text); font-weight:600; cursor:pointer; }
+        input[type=checkbox]{ accent-color:var(--accent); width:16px; height:16px; }
+        .url{ display:flex; gap:8px; }
+        .url input{ flex:1; min-width:0; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+        button{ background:var(--accent); color:#1d1720; border:0; border-radius:9px; padding:9px 16px; font:inherit; font-weight:800; cursor:pointer; white-space:nowrap; }
+        button.ghost{ background:transparent; color:var(--text); border:1px solid var(--line); }
+        button:hover{ filter:brightness(1.1); }
+        ol{ padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:14px; }
+        code{ background:#251C27; border-radius:5px; padding:1px 6px; font-size:12.5px; }
+        .result{ margin-top:12px; font-size:13px; font-weight:700; min-height:20px; }
+        .result.ok{ color:var(--ok); } .result.bad{ color:var(--bad); }
+        .preview{ position:sticky; top:20px; }
+        .preview-frame{ border-radius:16px; overflow:hidden; border:1px solid var(--line);
+            background:repeating-conic-gradient(#3a3040 0 25%, #332a39 0 50%) 0 0/24px 24px; }
+        iframe{ display:block; width:560px; height:740px; border:0; max-width:100%; }
+        .preview p{ color:var(--muted); font-size:12px; margin-top:8px; }
+    </style>
+</head>
+<body>
+    <main>
+    <div>
+        <h1>🌸 Community Tasks setup</h1>
+        <p class="lead">Fill this in, copy the link into an OBS Browser Source, done. Nothing here is saved or sent anywhere.</p>
+
+        <section>
+            <h2><span class="n">1</span> Streamer.bot connection</h2>
+            <div class="grid">
+                <label>Host <input type="text" id="host" value="127.0.0.1"><span class="hint">Leave as is if Streamer.bot runs on this PC</span></label>
+                <label>Port <input type="number" id="port" value="8080"><span class="hint">Servers/Clients → WebSocket Server</span></label>
+                <label>Password <input type="password" id="password" placeholder="only if authentication is on"><span class="hint">Leave empty if you didn't enable it</span></label>
+                <label>Action name <input type="text" id="action" value="TaskStore"><span class="hint">The action with the C# code</span></label>
+            </div>
+            <div class="result" id="testResult"></div>
+            <button class="ghost" id="testBtn" type="button">Test connection</button>
+        </section>
+
+        <section>
+            <h2><span class="n">2</span> Look &amp; feel</h2>
+            <div class="grid">
+                <label class="wide">Title <input type="text" id="title" value="🌸 Community Tasks 🌸"></label>
+                <label class="wide">Extra command line <input type="text" id="extra" placeholder="e.g. !lurk !hydrate !help"><span class="hint">Shown under the built-in commands. Leave empty to hide.</span></label>
+            </div>
+            <div class="checks" style="margin-top:14px">
+                <label><input type="checkbox" id="anim" checked> Animations</label>
+                <label><input type="checkbox" id="footer" checked> Show commands footer</label>
+                <label><input type="checkbox" id="hidedone"> Hide completed tasks</label>
+                <label><input type="checkbox" id="status" checked> Show connection warnings</label>
+            </div>
+        </section>
+
+        <section>
+            <h2><span class="n">3</span> Add it to OBS</h2>
+            <div class="url">
+                <input type="text" id="url" readonly>
+                <button id="copyBtn" type="button">Copy</button>
+            </div>
+            <ol style="margin-top:14px">
+                <li>In OBS: <b>Sources → + → Browser</b>.</li>
+                <li>Untick <b>Local file</b> and paste the link above into <b>URL</b>.</li>
+                <li>Set <b>Width</b> <code>560</code> and <b>Height</b> <code>760</code>.</li>
+                <li>Changed something in Streamer.bot later? Right-click the source → <b>Refresh</b>.</li>
+            </ol>
+        </section>
+    </div>
+
+    <div class="preview">
+        <div class="preview-frame"><iframe id="preview" title="Overlay preview"></iframe></div>
+        <p>Live preview with pretend chat activity. Your real overlay only shows real tasks.</p>
+    </div>
+    </main>
+
+    <script>
+    const $ = id => document.getElementById(id);
+    const fields = ["host","port","password","action","title","extra"];
+    const checks = ["anim","footer","hidedone","status"];
+    const defaults = { host:"127.0.0.1", port:"8080", action:"TaskStore", title:"🌸 Community Tasks 🌸",
+                    anim:true, footer:true, hidedone:false, status:true };
+    const overlayUrl = new URL("index.html", location.href);
+
+    function buildParams(forPreview) {
+        const p = new URLSearchParams();
+        fields.forEach(f => {
+            const v = $(f).value.trim();
+            if (forPreview && ["host","port","password","action"].includes(f)) return;
+            if (v && v !== defaults[f]) p.set(f, v);
+        });
+        checks.forEach(c => { if ($(c).checked !== defaults[c]) p.set(c, $(c).checked ? "1" : "0"); });
+        if (forPreview) p.set("demo", "1");
+        return p;
+    }
+
+    let previewTimer;
+    function update() {
+        const p = buildParams(false).toString();
+        $("url").value = overlayUrl.href + (p ? "?" + p : "");
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(() => {
+            $("preview").src = overlayUrl.href + "?" + buildParams(true).toString();
+        }, 350);
+    }
+
+    document.querySelectorAll("input").forEach(i => i.addEventListener("input", update));
+    update();
+
+    $("copyBtn").onclick = async () => {
+        const btn = $("copyBtn");
+        try { await navigator.clipboard.writeText($("url").value); }
+        catch { $("url").select(); document.execCommand("copy"); }
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1400);
+    };
+
+    /* ---------- connection test ---------- */
+    async function sha256Base64(text) {
+        const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+        return btoa(String.fromCharCode(...new Uint8Array(hash)));
+    }
+
+    function result(text, ok) {
+        const r = $("testResult");
+        r.textContent = text;
+        r.className = "result " + (ok === true ? "ok" : ok === false ? "bad" : "");
+    }
+
+    $("testBtn").onclick = () => {
+        const host = $("host").value.trim() || "127.0.0.1";
+        const port = $("port").value.trim() || "8080";
+        const pw = $("password").value;
+        const action = $("action").value.trim() || "TaskStore";
+        result("Connecting…");
+
+        let ws, done = false, gotHello = false;
+        const finish = (text, ok) => { if (done) return; done = true; result(text, ok); try { ws.close(); } catch {} };
+        const timeout = setTimeout(() => finish(`No answer from ${host}:${port}. Is Streamer.bot open and the WebSocket Server started?`, false), 5000);
+
+        // Subscribe like the overlay does, then ask TaskStore for the list. Success
+        // means the task-list broadcast actually arrived
+        let answerTimer;
+        const askAction = () => {
+            ws.send(JSON.stringify({ request: "Subscribe", id: "t-sub", events: { General: ["Custom"] } }));
+            ws.send(JSON.stringify({ request: "DoAction", id: "t-get", action: { name: action }, args: { operation: "get" } }));
+        };
+
+        try { ws = new WebSocket(`ws://${host}:${port}/`); }
+        catch { clearTimeout(timeout); return finish("That host/port doesn't look right.", false); }
+
+        ws.onopen = () => {};   // wait for Streamer.bot's "Hello"
+        ws.onerror = () => {};
+        ws.onclose = () => { clearTimeout(timeout); clearTimeout(answerTimer); finish(`Couldn't connect to ${host}:${port}. Start the WebSocket Server in Streamer.bot (Servers/Clients → WebSocket Server) and check the port.`, false); };
+        ws.onmessage = async e => {
+            let m; try { m = JSON.parse(e.data); } catch { return; }
+            if (m.request === "Hello") {
+                gotHello = true;
+                if (m.authentication) {
+                    if (!pw) { clearTimeout(timeout); return finish("Connected, but Streamer.bot asks for a password. Enter it above.", false); }
+                    const secret = await sha256Base64(pw + m.authentication.salt);
+                    const auth = await sha256Base64(secret + m.authentication.challenge);
+                    ws.send(JSON.stringify({ request: "Authenticate", id: "t-auth", authentication: auth }));
+                } else askAction();
+            } else if (m.id === "t-auth") {
+                if (m.status === "ok") askAction();
+                else { clearTimeout(timeout); finish("Wrong WebSocket password.", false); }
+            } else if (m.id === "t-get") {
+                clearTimeout(timeout);
+                if (m.status !== "ok") return finish(`Connected, but Streamer.bot couldn't run an action called "${action}". Check the action name.`, false);
+                result(`Connected. Waiting for "${action}" to send the task list…`);
+                answerTimer = setTimeout(() => finish(
+                    `Connected, and Streamer.bot accepted the request, but "${action}" never sent the task list back. ` +
+                    `Open its C# sub-action, click Compile, and check the Streamer.bot log.`, false), 4000);
+            } else if (m.data && m.data.source === "CommunityTasks" && Array.isArray(m.data.tasks)) {
+                clearTimeout(answerTimer);
+                const n = m.data.tasks.length;
+                finish(`✔ Connected, and "${action}" sent the task list (${n} task${n === 1 ? "" : "s"}). You're good to go!`, true);
+            }
+        };
+    };
+    </script>
+</body>
+</html>
